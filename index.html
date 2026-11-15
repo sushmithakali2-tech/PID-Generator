@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>P&ID Generator</title>
+<style>
+:root{--fg:#111;--mut:#6b6b6b;--line:#d9d9d9;--pan:#fff;--bg:#ececec;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:#111}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;height:100%;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,select,input{font:inherit;color:inherit}
+.bar{background:#111;color:#fff;display:flex;align-items:center;gap:10px;padding:8px 12px;flex-wrap:wrap}
+.logo{font-weight:700;letter-spacing:.3px;display:flex;align-items:center;gap:8px;margin-right:6px}
+.logo i{display:inline-block;width:22px;height:22px;border:2px solid #fff;border-radius:5px;position:relative}
+.logo i:after{content:"";position:absolute;left:3px;right:3px;top:8px;height:2px;background:#fff}
+.bar input,.bar select{background:#262626;border:1px solid #3d3d3d;border-radius:6px;padding:5px 8px;color:#fff;min-width:0}
+.bar #ttl{width:230px}
+.sp{flex:1}
+.bar button{background:#262626;border:1px solid #3d3d3d;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer}
+.bar button:hover{background:#3a3a3a}
+.zoom{display:flex;gap:4px;align-items:center}
+.zoom span{min-width:42px;text-align:center;color:#bdbdbd}
+.shell{flex:1;min-height:0;display:grid;grid-template-columns:200px minmax(0,1fr) 310px}
+.side,.right{background:var(--pan);overflow:auto}
+.side{border-right:1px solid var(--line);padding:10px}
+.right{border-left:1px solid var(--line);display:flex;flex-direction:column}
+.side h3{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--mut);margin:12px 0 6px}
+.side h3:first-child{margin-top:2px}
+.pal{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pal button{display:flex;flex-direction:column;align-items:center;gap:2px;background:#fafafa;border:1px solid var(--line);border-radius:8px;padding:6px 2px;cursor:pointer;font-size:11px;text-align:center}
+.pal button:hover{border-color:#111;background:#f0f0f0}
+.ic{width:38px;height:38px}
+.ic *{vector-effect:non-scaling-stroke}
+.ai{border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:6px;background:#fafafa}
+.ai textarea{width:100%;height:78px;resize:vertical;border:1px solid #bdbdbd;border-radius:6px;padding:6px;font:inherit;background:#fff}
+.ai button{width:100%;margin-top:6px;background:#111;color:#fff;border:0;border-radius:6px;padding:7px;cursor:pointer;font-weight:600}
+.ai button:disabled{background:#777;cursor:wait}
+.ai small{display:block;margin-top:6px;color:var(--mut)}
+.canvas{overflow:auto;padding:24px;background-color:#e6e6e6;background-image:radial-gradient(#bdbdbd 1px,transparent 1px);background-size:18px 18px}
+.sheet{display:inline-block;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25),0 8px 24px rgba(0,0,0,.12)}
+.sheet svg{display:block}
+svg text{fill:#111;font:11px system-ui,sans-serif}
+svg .s{stroke:#111;fill:#e4e4e4;stroke-width:1.6}
+svg .p{stroke:#111;stroke-width:2.4;fill:none}
+svg .d{stroke:#555;stroke-width:1.4;stroke-dasharray:5 4;fill:none}
+svg .t{stroke:#111;stroke-width:1;fill:none}
+.tabs{display:flex;border-bottom:1px solid var(--line);background:#fafafa}
+.tabs button{flex:1;border:0;background:none;padding:10px 4px;cursor:pointer;border-bottom:2px solid transparent;color:var(--mut);font-weight:600}
+.tabs button.on{color:#111;border-bottom-color:#111;background:#fff}
+.badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:#111;color:#fff;font-size:11px}
+.badge.z{background:#bdbdbd}
+.pane{padding:10px;overflow:auto;flex:1;min-height:0}
+.li{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:#fafafa}
+.li .n{flex:1;min-width:0}
+.li small{color:var(--mut);display:block}
+.li button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:1px 7px;cursor:pointer}
+.li button:hover{border-color:#111}
+.li label{display:inline-flex;gap:3px;align-items:center;font-size:12px}
+.it{padding:7px 9px;border-radius:6px;margin-bottom:6px;border-left:4px solid #111;background:#f4f4f4}
+.it.ok{border-color:#a3a3a3}.it.warn{border-color:#6b6b6b}.it.err{border-color:#111;font-weight:600}
+table{width:100%;border-collapse:collapse;margin-bottom:14px}
+th,td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line);font-size:12px}
+th{color:var(--mut);font-weight:600}
+h4{margin:4px 0 6px;font-size:12px}
+.empty{color:var(--mut);padding:8px 2px}
+.stat{background:#fff;border-top:1px solid var(--line);padding:5px 12px;color:var(--mut);display:flex;gap:16px;flex-wrap:wrap}
+@media (max-width:900px){
+ html,body{height:auto}
+ .shell{display:flex;flex-direction:column}
+ .side{border-right:0;border-bottom:1px solid var(--line)}
+ .pal{grid-template-columns:repeat(5,1fr)}
+ .canvas{min-height:340px;padding:12px}
+ .right{border-left:0;border-top:1px solid var(--line);min-height:320px}
+ .bar #ttl{width:100%;order:5}
+}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="logo"><i></i>P&amp;ID Generator</div>
+  <select id="pre" aria-label="Example process"></select>
+  <input id="ttl" type="text" aria-label="Drawing title">
+  <div class="sp"></div>
+  <div class="zoom"><button id="zo" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" aria-label="Zoom in">+</button><button id="zf">Fit</button></div>
+  <button id="csv">Export CSV</button>
+  <button id="clr">Clear</button>
+</header>
+<div class="shell">
+  <aside class="side" id="pal">
+    <div class="ai">
+      <h3 style="margin:0 0 6px">Describe your process</h3>
+      <textarea id="aitext" placeholder="e.g. Feed tank, pump, heat exchanger, reactor with temperature control" aria-label="Process description"></textarea>
+      <button id="aibtn">Generate with AI</button>
+      <small id="aist">Needs the backend running.</small>
+    </div>
+  </aside>
+  <section class="canvas" id="cv"><div class="sheet"><svg id="svg" role="img" aria-label="P&amp;ID drawing"></svg></div></section>
+  <aside class="right">
+    <div class="tabs" id="tabs"></div>
+    <div class="pane" id="p0"></div>
+    <div class="pane" id="p1" hidden></div>
+    <div class="pane" id="p2" hidden></div>
+  </aside>
+</div>
+<div class="stat"><span id="s1"></span><span id="s2"></span><span>Draft only. Needs engineering review and a HAZOP before use.</span></div>
+<script>
+var TY={tank:["Tank","T"],vessel:["Vessel / reactor","V"],pump:["Pump","P"],hx:["Heat exchanger","E"],valve:["Isolation valve","HV"],check:["Check valve","CKV"],cvT:["Control valve (temp)","TV"],cvF:["Control valve (flow)","FV"],cvP:["Control valve (pressure)","PV"],cvL:["Control valve (level)","LV"]};
+var GR=[["Equipment",["tank","vessel","pump","hx"]],["Valves",["valve","check"]],["Control valves",["cvT","cvF","cvP","cvL"]]];
+var SVC={T:"Temperature",F:"Flow",P:"Pressure",L:"Level"};
+var PRE={
+"Heated feed to reactor":{t:"Feed heating with temperature control",s:[["tank"],["valve"],["pump"],["check"],["valve"],["hx"],["cvT"],["vessel",1]]},
+"Pump with flow control":{t:"Transfer line with flow control",s:[["tank"],["valve"],["pump"],["check"],["valve"],["cvF"],["vessel",1]]},
+"Flawed line (test the checker)":{t:"Deliberately flawed example",s:[["tank"],["pump"],["hx"],["cvT"],["vessel"]]}
+};
+var items=[],Y=220,NS="http://www.w3.org/2000/svg",zoom=1,fitMode=true,curW=640,tab=0,H=330;
+var SZ={tank:[64,80],vessel:[54,90],pump:[44,44],hx:[84,40],valve:[30,22],check:[30,22],cv:[30,22]};
+var $=function(i){return document.getElementById(i)};
+function el(tag,a,txt){var e=document.createElementNS(NS,tag);for(var k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e}
+function h(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function tt(g,x,y,t,an){g.appendChild(el("text",{x:x,y:y,"text-anchor":an||"middle"},t))}
+function ty(k){return k.indexOf("cv")==0?"cv":k}
+
+function sym(g,type,cx,Y){
+  if(type=="tank")g.appendChild(el("rect",{"class":"s",x:cx-32,y:Y-40,width:64,height:80,rx:4}));
+  else if(type=="vessel")g.appendChild(el("rect",{"class":"s",x:cx-27,y:Y-45,width:54,height:90,rx:22}));
+  else if(type=="pump"){g.appendChild(el("circle",{"class":"s",cx:cx,cy:Y,r:20}));g.appendChild(el("polygon",{"class":"s",points:(cx-8)+","+(Y-11)+" "+(cx-8)+","+(Y+11)+" "+(cx+12)+","+Y}))}
+  else if(type=="hx"){g.appendChild(el("rect",{"class":"s",x:cx-42,y:Y-20,width:84,height:40}));g.appendChild(el("path",{"class":"t",d:"M"+(cx-34)+" "+Y+" h10 l6 -12 l8 24 l8 -24 l8 24 l6 -12 h10"}))}
+  else if(type=="check"){g.appendChild(el("polygon",{"class":"s",points:(cx-12)+","+(Y-10)+" "+(cx+12)+","+Y+" "+(cx-12)+","+(Y+10)}));g.appendChild(el("path",{"class":"p",d:"M"+(cx+12)+" "+(Y-10)+" v20"}))}
+  else{g.appendChild(el("polygon",{"class":"s",points:(cx-15)+","+(Y-11)+" "+(cx+15)+","+(Y+11)+" "+(cx+15)+","+(Y-11)+" "+(cx-15)+","+(Y+11)}));
+    if(type=="cv"){g.appendChild(el("path",{"class":"t",d:"M"+cx+" "+(Y-11)+" V"+(Y-26)}));g.appendChild(el("path",{"class":"s",d:"M"+(cx-12)+" "+(Y-26)+" a12 12 0 0 1 24 0 Z"}))}}
+}
+
+function build(){
+  var c={},stream=[],ins=[];
+  items.forEach(function(it){
+    var pf=TY[it.k][1];c[pf]=(c[pf]||100)+1;var n=c[pf];
+    stream.push({type:ty(it.k),tag:pf+"-"+n,num:n,letter:pf[0],psv:it.psv?"PSV-"+n:null,label:TY[it.k][0]});
+  });
+  stream.forEach(function(s,i){
+    if(s.type!="cv")return;
+    var ok=function(x){return ["tank","vessel","hx","pump"].indexOf(x.type)>=0},j=-1,q;
+    for(q=i+1;q<stream.length;q++)if(ok(stream[q])){j=q;break}
+    if(j<0)for(q=i-1;q>=0;q--)if(ok(stream[q])){j=q;break}
+    if(j>=0)ins.push({tag:s.letter+"T-"+s.num,at:stream[j].tag,loop:s.letter+"IC-"+s.num,final:s.tag,svc:SVC[s.letter]});
+  });
+  return {stream:stream,instruments:ins};
+}
+
+function draw(d){
+  var svg=$("svg");svg.innerHTML="";
+  var x=60,pos={};
+  d.stream.forEach(function(it){var s=SZ[it.type];pos[it.tag]={cx:x+s[0]/2,h:s[1],it:it};x+=s[0]+26});
+  var W=Math.max(x+30,d.stream.length?420:640);curW=W;
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);
+  svg.appendChild(el("rect",{x:2,y:2,width:W-4,height:H-4,fill:"#fff",stroke:"#111","stroke-width":1.5}));
+  var tb=el("g",{});svg.appendChild(tb);
+  tb.appendChild(el("rect",{x:W-212,y:H-36,width:210,height:34,fill:"#fff",stroke:"#111"}));
+  tt(tb,W-206,H-23,"P&ID · DRAFT · REV A","start");tb.lastChild.setAttribute("style","font-size:9px;fill:#6b6b6b");
+  tt(tb,W-206,H-9,($("ttl").value||"Untitled").slice(0,34),"start");tb.lastChild.setAttribute("style","font-weight:700");
+  if(!d.stream.length){tt(svg,W/2,Y,"Add equipment from the left panel to start your P&ID");return}
+  svg.appendChild(el("path",{"class":"p",d:"M20 "+Y+" H"+(W-14)}));
+  svg.appendChild(el("polygon",{points:(W-14)+","+(Y-6)+" "+(W-2)+","+Y+" "+(W-14)+","+(Y+6),style:"fill:#111"}));
+  d.stream.forEach(function(it){
+    var p=pos[it.tag],cx=p.cx,g=el("g",{});svg.appendChild(g);
+    sym(g,it.type,cx,Y);tt(g,cx,Y+p.h/2+16,it.tag);
+    if(it.psv){var top=Y-p.h/2,px=cx+16;
+      g.appendChild(el("path",{"class":"t",d:"M"+px+" "+top+" V"+(top-12)}));
+      g.appendChild(el("polygon",{"class":"s",points:(px-8)+","+(top-26)+" "+(px+8)+","+(top-26)+" "+px+","+(top-12)}));
+      tt(g,px+12,top-30,it.psv,"start")}
+  });
+  d.instruments.forEach(function(n,i){
+    var p=pos[n.at],f=pos[n.final];if(!p||!f)return;
+    var tx=p.cx-(p.it.psv?14:0),ty=150,g=el("g",{});svg.appendChild(g);
+    g.appendChild(el("path",{"class":"t",d:"M"+tx+" "+(ty+15)+" V"+(Y-p.h/2)}));
+    bubble(g,tx,ty,n.tag);
+    var cy=50+i*38;bubble(g,f.cx,cy,n.loop);
+    var ex=tx<f.cx?f.cx-15:f.cx+15;
+    g.appendChild(el("path",{"class":"d",d:"M"+tx+" "+(ty-15)+" V"+cy+" H"+ex}));
+    g.appendChild(el("path",{"class":"d",d:"M"+f.cx+" "+(cy+15)+" V"+(Y-38)}));
+  });
+}
+function bubble(g,x,y,tag){
+  var m=/^([A-Za-z]+)-?(.*)$/.exec(tag)||[0,tag,""];
+  g.appendChild(el("circle",{"class":"s",cx:x,cy:y,r:15}));
+  g.appendChild(el("path",{"class":"t",d:"M"+(x-15)+" "+y+" H"+(x+15)}));
+  tt(g,x,y-3,m[1]);tt(g,x,y+10,m[2]);
+}
+
+function validate(d){
+  var out=[],S=d.stream;
+  function add(l,m){out.push([l,m])}
+  S.forEach(function(it,i){
+    var a=S[i-1],b=S[i+1],c=S[i+2];
+    if(it.type=="pump"){
+      if(!a||a.type!="valve")add("err",it.tag+": no isolation valve on suction");
+      if(!b||b.type!="check")add("err",it.tag+": no check valve on discharge");
+      else if(!c||c.type!="valve")add("err",it.tag+": no isolation valve on discharge");
+    }
+    if(it.type=="vessel"&&!it.psv)add("err",it.tag+": pressure vessel has no relief valve (PSV)");
+    if(it.type=="cv"&&!d.instruments.some(function(n){return n.final==it.tag}))add("warn",it.tag+": no equipment to measure, so no control loop was drawn");
+  });
+  if(!S.length)add("warn","Add equipment to start the drawing");
+  else if(!out.length)add("ok","All checks passed: isolation, check valves, relief protection and control loops look complete.");
+  return out;
+}
+
+function tbl(head,rows){
+  var t=h("table"),r=h("tr");head.forEach(function(x){r.appendChild(h("th",0,x))});t.appendChild(r);
+  rows.forEach(function(w){var tr=h("tr");w.forEach(function(x){tr.appendChild(h("td",0,x))});t.appendChild(tr)});return t}
+
+function applyZoom(){
+  if(fitMode)zoom=Math.min(1.5,Math.max(.4,($("cv").clientWidth-(innerWidth<900?24:48))/curW));
+  var s=$("svg");s.setAttribute("width",Math.round(curW*zoom));s.setAttribute("height",Math.round(H*zoom));
+  $("zv").textContent=Math.round(zoom*100)+"%";
+}
+
+function refresh(){
+  var d=build(),v=validate(d);
+  var L=$("p0");L.innerHTML="";
+  if(!items.length)L.appendChild(h("div","empty","No equipment yet. Click an item in the left panel to add it, in flow order."));
+  items.forEach(function(it,i){
+    var s=d.stream[i],r=h("div","li"),n=h("span","n");
+    n.appendChild(h("b",0,s.tag));n.appendChild(h("small",0,s.label));r.appendChild(n);
+    if(it.k=="vessel"){var lb=h("label"),cb=h("input");cb.type="checkbox";cb.checked=!!it.psv;
+      cb.onchange=function(){it.psv=cb.checked?1:0;refresh()};lb.appendChild(cb);lb.appendChild(document.createTextNode("PSV"));r.appendChild(lb)}
+    [["↑",-1,"Move up"],["↓",1,"Move down"],["✕",0,"Remove"]].forEach(function(b){var e=h("button",0,b[0]);e.setAttribute("aria-label",b[2]);
+      e.onclick=function(){if(!b[1])items.splice(i,1);else{var j=i+b[1];if(j<0||j>=items.length)return;var t=items[i];items[i]=items[j];items[j]=t}refresh()};r.appendChild(e)});
+    L.appendChild(r);
+  });
+  var C=$("p1");C.innerHTML="";
+  v.forEach(function(r){C.appendChild(h("div","it "+r[0],({ok:"✓ ",warn:"! ",err:"✕ "})[r[0]]+r[1]))});
+  var P=$("p2");P.innerHTML="";
+  if(!d.stream.length)P.appendChild(h("div","empty","The equipment list and instrument index appear here."));
+  else{P.appendChild(h("h4",0,"Equipment and valve list"));
+    P.appendChild(tbl(["Tag","Description"],d.stream.map(function(s){return [s.tag,s.label]})));
+    P.appendChild(h("h4",0,"Instrument index"));
+    P.appendChild(tbl(["Tag","Service","Location"],d.instruments.map(function(n){return [n.tag+" / "+n.loop,n.svc,n.at]})))}
+  var ne=v.filter(function(r){return r[0]=="err"}).length,nw=v.filter(function(r){return r[0]=="warn"}).length;
+  tabsRender(ne+nw,ne);
+  $("s1").textContent=d.stream.length+" items · "+d.instruments.length+" control loops";
+  $("s2").textContent=ne+" errors · "+nw+" warnings";
+  draw(d);applyZoom();
+}
+function tabsRender(n,e){
+  var T=$("tabs");T.innerHTML="";
+  ["Process","Checks","Lists"].forEach(function(name,i){
+    var b=h("button",i==tab?"on":"",name);
+    if(i==1){var bg=h("span","badge"+(n?"":" z"),String(n));b.appendChild(bg)}
+    b.onclick=function(){tab=i;tabsRender(n,e)};T.appendChild(b);
+    $("p"+i).hidden=i!=tab;
+  });
+}
+
+var pal=$("pal");
+GR.forEach(function(g){
+  pal.appendChild(h("h3",0,g[0]));var w=h("div","pal");
+  g[1].forEach(function(k){
+    var b=h("button");b.setAttribute("aria-label","Add "+TY[k][0]);
+    var s=el("svg",{"class":"ic",viewBox:"0 0 100 100"}),gg=el("g",{});s.appendChild(gg);sym(gg,ty(k),50,52);
+    b.appendChild(s);b.appendChild(h("span",0,TY[k][0]));
+    b.onclick=function(){items.push({k:k,psv:k=="vessel"?1:0});refresh()};w.appendChild(b)});
+  pal.appendChild(w);
+});
+var sel=$("pre");
+Object.keys(PRE).forEach(function(k){sel.appendChild(h("option",0,k))});
+function load(){var p=PRE[sel.value];$("ttl").value=p.t;items=p.s.map(function(s){return {k:s[0],psv:s[1]||0}});refresh()}
+sel.onchange=load;
+$("ttl").oninput=refresh;
+$("clr").onclick=function(){items=[];$("ttl").value="Untitled process";refresh()};
+$("zi").onclick=function(){fitMode=false;zoom=Math.min(2.5,zoom+.15);applyZoom()};
+$("zo").onclick=function(){fitMode=false;zoom=Math.max(.3,zoom-.15);applyZoom()};
+$("zf").onclick=function(){fitMode=true;applyZoom()};
+addEventListener("resize",applyZoom);
+$("aibtn").onclick=async function(){
+  var b=$("aibtn"),st=$("aist"),text=$("aitext").value.trim();
+  if(!text){st.textContent="Type a description first.";return}
+  b.disabled=true;st.textContent="Generating...";
+  try{
+    var r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({description:text})});
+    var d=await r.json();
+    if(!r.ok)throw new Error(d.error||"Request failed");
+    items=d.items.map(function(i){return {k:i.k,psv:i.psv?1:0}});
+    $("ttl").value=d.title;fitMode=true;refresh();st.textContent="Done. Review the checks tab.";
+  }catch(e){st.textContent=e.message=="Failed to fetch"?"Backend not reachable. Run npm start and open localhost:3000.":e.message}
+  b.disabled=false;
+};
+$("csv").onclick=async function(){
+  try{
+    var r=await fetch("/api/export",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:items})});
+    var blob=await r.blob(),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="pid-lists.csv";a.click();
+  }catch(e){$("aist").textContent="Export needs the backend running."}
+};
+load();
+</script>
+</body>
+</html>

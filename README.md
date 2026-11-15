@@ -33,13 +33,11 @@ Requires Node.js 18 or newer.
 
 ```bash
 npm install
-cp .env.example .env      # then put your Anthropic API key in .env
+cp .env.example .env      # Windows: copy .env.example .env
 npm start
 ```
 
-Open http://localhost:3000
-
-Without an API key the manual builder, checks and CSV export still work. Only "Generate with AI" needs the key.
+Add your Anthropic API key to the `.env` file, then open `http://localhost:3000` in your browser.
 
 ## API
 
